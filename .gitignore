@@ -1,0 +1,25 @@
+## Build results
+[Bb]in/
+[Oo]bj/
+out/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## VS / Rider IDE
+.vs/
+.idea/
+*.rsuser
+
+## NuGet
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nupkg
+**/packages/repositories.config
+
+## Build artifacts
+publish/
+artifacts/
