@@ -46,33 +46,46 @@ if (!(Test-Path $exePath)) {
 }
 
 # ── 3. Registry ──────────────────────────────────────────
+# Note: Use .NET Registry API instead of PowerShell cmdlets because
+# the HKCU:\Software\Classes\* path causes PowerShell to expand the
+# wildcard, enumerating thousands of keys and hanging.
 Write-Host "[3/3] Registering context menus..." -ForegroundColor Cyan
 
-$escapedExe = $exePath.Replace("\", "\\")
-
 # 3a. File context menu: NFC 정규화
-$keyFile = "HKCU:\Software\Classes\*\shell\NfcRenamer"
-New-Item -Path "$keyFile\command" -Force | Out-Null
-Set-ItemProperty -Path $keyFile -Name "(Default)" -Value "NFC 정규화"
-Set-ItemProperty -Path $keyFile -Name "Icon" -Value "`"$exePath`",0"
-Set-ItemProperty -Path $keyFile -Name "MultiSelectModel" -Value "Player"
-Set-ItemProperty -Path "$keyFile\command" -Name "(Default)" -Value "`"$exePath`" `"%1`""
+$key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\Classes\*\shell\NfcRenamer\command')
+$key.Close()
+$key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Classes\*\shell\NfcRenamer', $true)
+$key.SetValue('', 'NFC 정규화')
+$key.SetValue('Icon', "`"$exePath`",0")
+$key.SetValue('MultiSelectModel', 'Player')
+$key.Close()
+$key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Classes\*\shell\NfcRenamer\command', $true)
+$key.SetValue('', "`"$exePath`" `"%1`"")
+$key.Close()
 
 # 3b. Directory context menu: NFC 정규화
-$keyDir = "HKCU:\Software\Classes\Directory\shell\NfcRenamer"
-New-Item -Path "$keyDir\command" -Force | Out-Null
-Set-ItemProperty -Path $keyDir -Name "(Default)" -Value "NFC 정규화"
-Set-ItemProperty -Path $keyDir -Name "Icon" -Value "`"$exePath`",0"
-Set-ItemProperty -Path $keyDir -Name "MultiSelectModel" -Value "Player"
-Set-ItemProperty -Path "$keyDir\command" -Name "(Default)" -Value "`"$exePath`" `"%1`""
+$key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\Classes\Directory\shell\NfcRenamer\command')
+$key.Close()
+$key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Classes\Directory\shell\NfcRenamer', $true)
+$key.SetValue('', 'NFC 정규화')
+$key.SetValue('Icon', "`"$exePath`",0")
+$key.SetValue('MultiSelectModel', 'Player')
+$key.Close()
+$key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Classes\Directory\shell\NfcRenamer\command', $true)
+$key.SetValue('', "`"$exePath`" `"%1`"")
+$key.Close()
 
 # 3c. Directory context menu: NFC 정규화 (하위 포함)
-$keyDirR = "HKCU:\Software\Classes\Directory\shell\NfcRenamerRecursive"
-New-Item -Path "$keyDirR\command" -Force | Out-Null
-Set-ItemProperty -Path $keyDirR -Name "(Default)" -Value "NFC 정규화 (하위 포함)"
-Set-ItemProperty -Path $keyDirR -Name "Icon" -Value "`"$exePath`",0"
-Set-ItemProperty -Path $keyDirR -Name "MultiSelectModel" -Value "Player"
-Set-ItemProperty -Path "$keyDirR\command" -Name "(Default)" -Value "`"$exePath`" /r `"%1`""
+$key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\Classes\Directory\shell\NfcRenamerRecursive\command')
+$key.Close()
+$key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Classes\Directory\shell\NfcRenamerRecursive', $true)
+$key.SetValue('', 'NFC 정규화 (하위 포함)')
+$key.SetValue('Icon', "`"$exePath`",0")
+$key.SetValue('MultiSelectModel', 'Player')
+$key.Close()
+$key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Classes\Directory\shell\NfcRenamerRecursive\command', $true)
+$key.SetValue('', "`"$exePath`" /r `"%1`"")
+$key.Close()
 
 # ── Done ─────────────────────────────────────────────────
 Write-Host ""
