@@ -11,6 +11,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$ExePath = Resolve-Path $ExePath
+
 if (-not (Test-Path $ExePath)) {
     Write-Host "ERROR: Binary not found at $ExePath" -ForegroundColor Red
     exit 1
@@ -35,6 +37,13 @@ function Reset-Workspace {
     New-Item $testDir -ItemType Directory | Out-Null
 }
 
+# Helper: run the exe and wait for it to fully exit (WinExe is not waited on by & operator)
+function Invoke-Exe {
+    param([string[]]$arguments)
+    $p = Start-Process -FilePath $ExePath -ArgumentList $arguments -Wait -PassThru -NoNewWindow
+    return $p.ExitCode
+}
+
 # --- Test 1: Single NFD file renamed to NFC ---
 Write-Host "Test 1: Single file NFD -> NFC"
 Reset-Workspace
@@ -47,8 +56,7 @@ $nfcName = "$([char]0xAC00).txt"
 $nfdPath = Join-Path $testDir $nfdName
 New-Item $nfdPath -ItemType File | Out-Null
 
-& $ExePath $nfdPath
-Start-Sleep -Milliseconds 500
+Invoke-Exe "`"$nfdPath`""
 
 $nfcPath = Join-Path $testDir $nfcName
 Assert-True "NFD file renamed to NFC" (Test-Path $nfcPath)
@@ -61,8 +69,7 @@ Reset-Workspace
 $nfcFile = Join-Path $testDir "already-nfc.txt"
 New-Item $nfcFile -ItemType File -Value "test content" | Out-Null
 
-& $ExePath $nfcFile
-Start-Sleep -Milliseconds 500
+Invoke-Exe "`"$nfcFile`""
 
 Assert-True "NFC file still exists" (Test-Path $nfcFile)
 Assert-True "Content preserved" ((Get-Content $nfcFile -Raw) -match "test content")
@@ -82,8 +89,7 @@ $nfdChildName = "$([char]0x1102)$([char]0x1161).txt"
 $nfcChildName = "$([char]0xB098).txt"
 New-Item (Join-Path $nfdDirPath $nfdChildName) -ItemType File | Out-Null
 
-& $ExePath -r $nfdDirPath
-Start-Sleep -Milliseconds 500
+Invoke-Exe "-r", "`"$nfdDirPath`""
 
 $nfcDirPath = Join-Path $testDir $nfcDirName
 Assert-True "NFD directory renamed to NFC" (Test-Path $nfcDirPath)
@@ -101,8 +107,7 @@ New-Item $nfcCollision -ItemType File | Out-Null
 $nfdCollision = Join-Path $testDir "$([char]0x1100)$([char]0x1161)collision.txt"
 New-Item $nfdCollision -ItemType File | Out-Null
 
-& $ExePath $nfdCollision
-Start-Sleep -Milliseconds 500
+Invoke-Exe "`"$nfdCollision`""
 
 $suffixedPath = Join-Path $testDir "$([char]0xAC00)collision (1).txt"
 Assert-True "Original NFC file still exists" (Test-Path $nfcCollision)
@@ -111,9 +116,7 @@ Assert-True "Collision resolved with (1) suffix" (Test-Path $suffixedPath)
 # --- Test 5: Non-existent path is handled gracefully ---
 Write-Host "Test 5: Non-existent path"
 
-$exitCode = 0
-& $ExePath "C:\nonexistent\path\file.txt"
-$exitCode = $LASTEXITCODE
+$exitCode = Invoke-Exe "`"C:\nonexistent\path\file.txt`""
 
 Assert-True "Non-existent path exits with code 0" ($exitCode -eq 0)
 
