@@ -25,7 +25,9 @@ jobs:
         run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained -o out/${{ matrix.rid }}
 
       - name: Create ZIP
-        run: Compress-Archive -Path out/${{ matrix.rid }}/* -DestinationPath NfcRenamer-${{ matrix.rid }}.zip
+        run: |
+          Copy-Item install.ps1, uninstall.ps1 -Destination out/${{ matrix.rid }}/
+          Compress-Archive -Path out/${{ matrix.rid }}/* -DestinationPath NfcRenamer-${{ matrix.rid }}.zip
 
       - name: Upload to Release
         env:

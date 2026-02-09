@@ -12,12 +12,22 @@ $installDir = Join-Path $env:LOCALAPPDATA "NfcRenamer"
 $exeName = "NfcRenamer.exe"
 $projectDir = $PSScriptRoot
 
-# ── 1. Build ──────────────────────────────────────────────
-Write-Host "[1/3] Building..." -ForegroundColor Cyan
-dotnet publish "$projectDir" -c Release -r win-x64 --self-contained -o "$projectDir\publish" --nologo -v quiet
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Build failed." -ForegroundColor Red
-    exit 1
+# ── 1. Build or locate exe ────────────────────────────────
+$prebuiltExe = Join-Path $projectDir $exeName
+
+if (Test-Path $prebuiltExe) {
+    # Release ZIP: pre-built exe exists next to this script
+    Write-Host "[1/3] Using pre-built $exeName ..." -ForegroundColor Cyan
+    $sourceDir = $projectDir
+} else {
+    # Development: build from source
+    Write-Host "[1/3] Building..." -ForegroundColor Cyan
+    dotnet publish "$projectDir" -c Release -r win-x64 --self-contained -o "$projectDir\publish" --nologo -v quiet
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Build failed." -ForegroundColor Red
+        exit 1
+    }
+    $sourceDir = "$projectDir\publish"
 }
 
 # ── 2. Copy files ────────────────────────────────────────
@@ -27,12 +37,11 @@ if (!(Test-Path $installDir)) {
     New-Item -ItemType Directory -Path $installDir -Force | Out-Null
 }
 
-# Copy all published files
-Copy-Item -Path "$projectDir\publish\*" -Destination $installDir -Recurse -Force
+Copy-Item -Path "$sourceDir\$exeName" -Destination $installDir -Force
 
 $exePath = Join-Path $installDir $exeName
 if (!(Test-Path $exePath)) {
-    Write-Host "Error: $exePath not found after publish." -ForegroundColor Red
+    Write-Host "Error: $exePath not found after install." -ForegroundColor Red
     exit 1
 }
 
