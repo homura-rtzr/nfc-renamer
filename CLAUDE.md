@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NfcRenamer is a Windows utility that normalizes file and directory names to Unicode NFC form (Normalization Form C). It integrates with Windows Explorer context menus as a silent, queue-driven background process—the WinForms Form1 files are unused placeholders.
+NfcRenamer is a Windows utility that normalizes file and directory names to Unicode NFC form (Normalization Form C). It integrates with Windows Explorer context menus as a silent, queue-driven background process.
 
 ## Build Commands
 
@@ -14,14 +14,14 @@ dotnet run            # Build and run
 dotnet publish        # Create publishable output
 ```
 
-Target framework: `net9.0-windows` (requires .NET 9 SDK with Windows desktop workload). No external NuGet dependencies.
+Target framework: `net9.0-windows` (requires .NET 9 SDK). Published with NativeAOT (`PublishAot=true`) for small, self-contained native binaries (~3-5 MB). No external NuGet dependencies.
 
 ## CI/CD
 
 Two GitHub Actions workflows in `.github/workflows/`:
 
 - **build.yml**: Runs on push/PR to main. Builds the project and runs integration tests (`tests/test-binary.ps1`).
-- **release.yml**: Runs when a GitHub Release is published. Builds self-contained binaries for `win-x64` and `win-arm64`, packages each as a ZIP, and uploads to the Release.
+- **release.yml**: Runs when a GitHub Release is published. Builds NativeAOT binaries for `win-x64` and `win-arm64`, packages each as a ZIP, and uploads to the Release.
 
 ### Integration Tests
 
@@ -52,7 +52,7 @@ All logic lives in **Program.cs** (~270 lines). No linting config.
 - **Base64-encoded queue entries**: Safely handles paths with special characters and newlines.
 - **CLI flags**: `-r` / `/r` for recursive directory mode; all other args are paths.
 - **Logging**: Appends to `%LOCALAPPDATA%/NfcRenamer/log.txt` with timestamps; failures are silently swallowed.
-- **Self-contained publish**: Release builds bundle the .NET runtime (~150MB+) since Windows does not ship with .NET 9. `UseWindowsForms` is enabled for the WinExe placeholder but no WinForms APIs are actually used.
+- **NativeAOT publish**: Release builds use AOT compilation to produce small native binaries (~3-5 MB) with no .NET runtime dependency. `OutputType=WinExe` sets the PE subsystem to Windows GUI (no console window) without requiring WinForms.
 
 ## Installation
 

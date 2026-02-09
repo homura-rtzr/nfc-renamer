@@ -22,7 +22,7 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish (${{ matrix.rid }})
-        run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained -o out/${{ matrix.rid }}
+        run: dotnet publish -c Release -r ${{ matrix.rid }} -o out/${{ matrix.rid }}
 
       - name: Create ZIP
         run: |

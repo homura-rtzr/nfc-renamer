@@ -17,8 +17,8 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Build
-        run: dotnet build -c Release
+      - name: Publish
+        run: dotnet publish -c Release -r win-x64 -o out
 
       - name: Integration test
-        run: powershell -ExecutionPolicy Bypass -File tests/test-binary.ps1 -ExePath bin/Release/net9.0-windows/NfcRenamer.exe
+        run: powershell -ExecutionPolicy Bypass -File tests/test-binary.ps1 -ExePath out/NfcRenamer.exe

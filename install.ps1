@@ -22,7 +22,7 @@ if (Test-Path $prebuiltExe) {
 } else {
     # Development: build from source
     Write-Host "[1/3] Building..." -ForegroundColor Cyan
-    dotnet publish "$projectDir" -c Release -r win-x64 --self-contained -o "$projectDir\publish" --nologo -v quiet
+    dotnet publish "$projectDir" -c Release -r win-x64 -o "$projectDir\publish" --nologo -v quiet
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Build failed." -ForegroundColor Red
         exit 1
