@@ -16,9 +16,28 @@ dotnet publish        # Create publishable output
 
 Target framework: `net9.0-windows` (requires .NET 9 SDK with Windows desktop workload). No external NuGet dependencies.
 
+## CI/CD
+
+Two GitHub Actions workflows in `.github/workflows/`:
+
+- **build.yml**: Runs on push/PR to main. Builds the project and runs integration tests (`tests/test-binary.ps1`).
+- **release.yml**: Runs when a GitHub Release is published. Builds self-contained binaries for `win-x64` and `win-arm64`, packages each as a ZIP, and uploads to the Release.
+
+### Integration Tests
+
+`tests/test-binary.ps1` runs the built exe against real files on the filesystem:
+
+1. Single file NFD → NFC renaming
+2. Already-NFC files left unchanged
+3. Recursive directory normalization (`-r` flag)
+4. Name collision resolved with `(1)` suffix
+5. Non-existent path handled gracefully
+
+Note: The exe is `OutputType=WinExe`, so tests use `Start-Process -Wait` instead of `&` to ensure the process completes before assertions.
+
 ## Architecture
 
-All logic lives in **Program.cs** (~270 lines). There are no tests, no CI, and no linting config.
+All logic lives in **Program.cs** (~270 lines). No linting config.
 
 ### Execution Flow
 
@@ -33,3 +52,8 @@ All logic lives in **Program.cs** (~270 lines). There are no tests, no CI, and n
 - **Base64-encoded queue entries**: Safely handles paths with special characters and newlines.
 - **CLI flags**: `-r` / `/r` for recursive directory mode; all other args are paths.
 - **Logging**: Appends to `%LOCALAPPDATA%/NfcRenamer/log.txt` with timestamps; failures are silently swallowed.
+- **Self-contained publish**: Release builds bundle the .NET runtime (~150MB+) since Windows does not ship with .NET 9. `UseWindowsForms` is enabled for the WinExe placeholder but no WinForms APIs are actually used.
+
+## Installation
+
+`install.ps1` builds, copies to `%LOCALAPPDATA%\NfcRenamer\`, and registers Explorer context menus via HKCU registry. `uninstall.ps1` reverses this. The exe icon (`app.ico`) is embedded and also used as the context menu icon.
