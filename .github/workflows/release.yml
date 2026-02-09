@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        rid: [win-x64, win-arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Publish (${{ matrix.rid }})
+        run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained -o out/${{ matrix.rid }}
+
+      - name: Create ZIP
+        run: Compress-Archive -Path out/${{ matrix.rid }}/* -DestinationPath NfcRenamer-${{ matrix.rid }}.zip
+
+      - name: Upload to Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.event.release.tag_name }} NfcRenamer-${{ matrix.rid }}.zip --clobber
